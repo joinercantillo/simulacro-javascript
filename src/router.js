@@ -8,7 +8,7 @@ const routes = {
   dashboard: { render: renderDashboard, private: true },
   projects: { render: renderProjects, private: true },
   'projects/new': { render: renderProjectForm, private: true, managerOnly: true },
-  'projects/edit': { render: renderProjectForm, private: true, managerOnly: true },
+  'projects/edit': { render: renderProjectForm, private: true },
   'projects/detail': { render: renderProjectDetail, private: true },
 };
 
@@ -23,16 +23,22 @@ function getRouteFromHash(hash) {
 }
 
 export function navigateTo(path) {
-  window.location.hash = `#/${path}`;
+  const normalized = path.replace(/^\/+/g, '');
+  const targetHash = `#/${normalized}`;
+  if (window.location.hash === targetHash) {
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+  } else {
+    window.location.hash = targetHash;
+  }
 }
 
 export function initRouter(session, handleLogout, navigateToFn) {
-  window.addEventListener('hashchange', () => handleRoute(session, navigateToFn));
-  window.addEventListener('load', () => handleRoute(session, navigateToFn));
-  handleRoute(session, navigateToFn);
+  window.addEventListener('hashchange', () => handleRoute(session, navigateToFn, handleLogout));
+  window.addEventListener('load', () => handleRoute(session, navigateToFn, handleLogout));
+  handleRoute(session, navigateToFn, handleLogout);
 }
 
-async function handleRoute(session, navigateToFn) {
+async function handleRoute(session, navigateToFn, handleLogout) {
   const hash = window.location.hash || '#/dashboard';
   const routeName = getRouteFromHash(hash);
   const route = routes[routeName];

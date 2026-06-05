@@ -2,45 +2,37 @@ import { getSession } from './auth.js';
 
 const app = document.getElementById('app');
 let currentToastTimeout;
+const THEME_KEY = 'project-manager-theme';
 
-function shuffleItems(rootSelector) {
-  const container = document.querySelector(rootSelector);
-  if (!container) return;
-  const items = Array.from(container.children).filter((item) => item.nodeType === 1);
-  items.forEach((item) => {
-    item.style.order = Math.floor(Math.random() * items.length);
-    item.style.marginRight = `${6 + Math.random() * 8}px`;
-    item.style.marginBottom = `${4 + Math.random() * 8}px`;
-  });
+export function getTheme() {
+  return localStorage.getItem(THEME_KEY) || 'light';
 }
 
-function randomizeTextRhythm(rootSelector = '#page-content') {
-  const elements = document.querySelectorAll(
-    `${rootSelector} h1, ${rootSelector} h2, ${rootSelector} h3, ${rootSelector} p, ${rootSelector} li, ${rootSelector} dt, ${rootSelector} dd`
-  );
-  elements.forEach((el) => {
-    const spacing = [0.75, 0.95, 1.1, 1.25, 1.45][Math.floor(Math.random() * 5)];
-    el.style.marginBottom = `${spacing}rem`;
-    if (Math.random() > 0.85) {
-      el.style.transform = `translateX(${Math.random() * 4 - 2}px)`;
-    }
-  });
+export function applyTheme(theme) {
+  document.body.classList.toggle('dark', theme === 'dark');
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+export function toggleTheme() {
+  const nextTheme = getTheme() === 'dark' ? 'light' : 'dark';
+  applyTheme(nextTheme);
+  return nextTheme;
 }
 
 function applyRandomLayout() {
-  shuffleItems('.topnav');
-  shuffleItems('.card-actions');
-  shuffleItems('.detail-actions');
-  shuffleItems('.form-actions');
-  randomizeTextRhythm();
+  // Disabled random layout to keep navigation stable and accessible.
 }
 
 export function renderLogin(onSubmit, message = '') {
   app.innerHTML = `
     <main class="center-screen">
       <section class="card card--login">
-        <h1>Project Manager</h1>
-        <p class="subtitle">Internal project dashboard for manager and collaborator roles.</p>
+        <div class="brand">
+          <span class="brand-icon">P</span>
+          <span>Project Manager</span>
+        </div>
+        <h1>Welcome back</h1>
+        <p class="subtitle">Log in to manage projects, review team assignments, and update task status in a single dashboard.</p>
         ${message ? `<div class="message message--info">${message}</div>` : ''}
         <form id="login-form" class="form-grid">
           <label>Email<input type="email" name="email" placeholder="manager@test.com" required /></label>
@@ -63,16 +55,18 @@ export function renderLogin(onSubmit, message = '') {
 }
 
 export function renderApp(session, onLogout, navigateTo) {
+  const currentTheme = getTheme();
   const nav = `
     <header class="topbar">
       <div>
-        <span class="brand">Internal Project Manager</span>
+        <span class="brand"><span class="brand-icon">P</span>Internal Project Manager</span>
         <span class="tag">${session.role.toUpperCase()}</span>
       </div>
-      <nav class="topnav">
+      <nav class="topnav" aria-label="Main navigation">
         <button type="button" class="nav-link" data-route="dashboard">Dashboard</button>
         <button type="button" class="nav-link" data-route="projects">Projects</button>
         ${session.role === 'manager' ? '<button type="button" class="nav-link" data-route="projects/new">New project</button>' : ''}
+        <button type="button" class="nav-link" id="theme-toggle">${currentTheme === 'dark' ? 'Light mode' : 'Dark mode'}</button>
         <button type="button" class="nav-link" id="logout-btn">Logout</button>
       </nav>
     </header>
@@ -81,8 +75,16 @@ export function renderApp(session, onLogout, navigateTo) {
 
   app.innerHTML = `<div class="app-shell">${nav}</div>`;
   document.getElementById('logout-btn').addEventListener('click', onLogout);
-  document.querySelectorAll('.nav-link').forEach((button) => {
-    button.addEventListener('click', () => navigateTo(button.dataset.route));
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const nextTheme = toggleTheme();
+    document.getElementById('theme-toggle').textContent = nextTheme === 'dark' ? 'Light mode' : 'Dark mode';
+  });
+  document.querySelectorAll('.nav-link[data-route]').forEach((button) => {
+    const route = button.dataset.route;
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      navigateTo(route);
+    });
   });
 
   applyRandomLayout();

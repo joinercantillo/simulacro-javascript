@@ -73,6 +73,7 @@ A single page application built with vanilla JavaScript and Vite for internal pr
 - Used Vite for fast development and ES module support.
 - Implemented role-based UI and route protection in JavaScript.
 - Persisted authentication with `localStorage` so session survives refreshes.
+- Added a dark mode toggle with theme persistence.
 - Used `json-server` for API simulation, including GET, POST, PATCH, and DELETE.
 - Modular code separated into API, auth, routing, view rendering, and state modules.
 

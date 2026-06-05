@@ -50,6 +50,7 @@ export async function renderProjects({ session, navigateTo }) {
             <span>Pending: ${stats.Pending || 0}</span>
           </div>
         </div>
+        ${session.role === 'manager' ? '<div class="page-actions"><button type="button" class="btn btn--secondary" data-route="projects/new" id="new-project-btn">Create project</button></div>' : ''}
         <div class="projects-grid">
           ${visibleProjects.map((project) => buildProjectCard(project, session)).join('')}
         </div>
@@ -57,6 +58,15 @@ export async function renderProjects({ session, navigateTo }) {
     `);
 
     attachProjectEvents(session, navigateTo);
+    if (session.role === 'manager') {
+      const newProjectButton = document.getElementById('new-project-btn');
+      if (newProjectButton) {
+        newProjectButton.addEventListener('click', (event) => {
+          event.preventDefault();
+          navigateTo('projects/new');
+        });
+      }
+    }
   } catch (error) {
     showToast('Could not load projects.', 'error');
     renderPage('<section class="message message--error">Projects are not available.</section>');
@@ -131,25 +141,41 @@ export async function renderProjectForm({ session, navigateTo }) {
 
   try {
     const project = isEdit ? await getProjectById(projectId) : null;
-    const isAllowedEdit = !isEdit || session.role === 'manager' || project?.assignedTo === session.id;
-    if (isEdit && !isAllowedEdit) {
+    const canEditAll = session.role === 'manager';
+    const canEditStatus = canEditAll || (isEdit && project?.assignedTo === session.id);
+
+    if (!canEditStatus) {
       showToast('You cannot modify this project.', 'error');
       navigateTo('projects');
       return;
     }
 
+    if (!isEdit && session.role !== 'manager') {
+      showToast('Only managers can create new projects.', 'error');
+      navigateTo('projects');
+      return;
+    }
+
+    const readOnlyAttr = canEditAll ? '' : 'readonly';
+    const disabledAttr = canEditAll ? '' : 'disabled';
+    const descriptionReadonly = canEditAll ? '' : 'readonly';
+    const note = !canEditAll && isEdit
+      ? '<p class="form-note">Collaborator access: you may only update the project status for assigned items.</p>'
+      : '';
+
     renderPage(`
       <section class="form-card">
         <h1>${isEdit ? 'Edit project' : 'Create new project'}</h1>
+        ${note}
         <form id="project-form" class="form-grid">
-          <label>Name<input name="name" type="text" value="${project?.name || ''}" required /></label>
-          <label>Description<textarea name="description" rows="4" required>${project?.description || ''}</textarea></label>
+          <label>Name<input name="name" type="text" value="${project?.name || ''}" ${canEditAll ? 'required' : readOnlyAttr} /></label>
+          <label>Description<textarea name="description" rows="4" ${canEditAll ? 'required' : descriptionReadonly}>${project?.description || ''}</textarea></label>
           <label>Status
             <select name="status" required>
               ${STATUS_OPTIONS.map((status) => `<option value="${status}" ${project?.status === status ? 'selected' : ''}>${status}</option>`).join('')}
             </select>
           </label>
-          <label>Responsible ID<input name="assignedTo" type="number" value="${project?.assignedTo || ''}" required /></label>
+          <label>Responsible ID<input name="assignedTo" type="number" value="${project?.assignedTo || ''}" ${canEditAll ? 'required' : disabledAttr} /></label>
           <div class="form-actions">
             <button type="submit" class="btn btn--primary">${isEdit ? 'Save' : 'Create'}</button>
             <button type="button" class="btn btn--secondary" id="cancel-btn">Cancel</button>
@@ -162,20 +188,24 @@ export async function renderProjectForm({ session, navigateTo }) {
     document.getElementById('project-form').addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = event.target;
-      const data = {
-        name: form.name.value.trim(),
-        description: form.description.value.trim(),
-        status: form.status.value,
-        assignedTo: Number(form.assignedTo.value),
-        createdAt: project?.createdAt || new Date().toLocaleDateString(),
-      };
+      const data = { status: form.status.value };
+
+      if (canEditAll) {
+        data.name = form.name.value.trim();
+        data.description = form.description.value.trim();
+        data.assignedTo = Number(form.assignedTo.value);
+        data.createdAt = project?.createdAt || new Date().toLocaleDateString();
+      }
 
       try {
         if (isEdit) {
           await updateProject(projectId, data);
           showToast('Project updated successfully.', 'success');
         } else {
-          await createProject(data);
+          await createProject({
+            ...data,
+            createdAt: new Date().toLocaleDateString(),
+          });
           showToast('Project created successfully.', 'success');
         }
         navigateTo('projects');
@@ -188,3 +218,4 @@ export async function renderProjectForm({ session, navigateTo }) {
     navigateTo('projects');
   }
 }
+

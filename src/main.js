@@ -1,10 +1,12 @@
 import { initRouter, navigateTo } from './router.js';
 import { getSession, logout, login } from './auth.js';
-import { renderLogin, renderApp } from './ui.js';
+import { renderLogin, renderApp, getTheme, applyTheme } from './ui.js';
 
 const session = getSession();
 
 function bootstrap() {
+  applyTheme(getTheme());
+
   if (!session) {
     renderLogin(handleLogin);
     return;
