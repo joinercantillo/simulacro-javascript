@@ -114,6 +114,7 @@ export async function renderProjectDetail({ session, navigateTo }) {
         <dl>
           <dt>Status</dt><dd>${project.status}</dd>
           <dt>Responsible ID</dt><dd>${project.assignedTo}</dd>
+          <dt>Responsible</dt><dd>${project.assignedToFirstName || ''} ${project.assignedToLastName || ''}</dd>
           <dt>Created</dt><dd>${project.createdAt}</dd>
         </dl>
         <div class="detail-actions">
@@ -176,6 +177,8 @@ export async function renderProjectForm({ session, navigateTo }) {
             </select>
           </label>
           <label>Responsible ID<input name="assignedTo" type="number" value="${project?.assignedTo || ''}" ${canEditAll ? 'required' : disabledAttr} /></label>
+          <label>Responsible First Name<input name="assignedToFirstName" type="text" value="${project?.assignedToFirstName || ''}" ${canEditAll ? 'required' : readOnlyAttr} /></label>
+          <label>Responsible Last Name<input name="assignedToLastName" type="text" value="${project?.assignedToLastName || ''}" ${canEditAll ? 'required' : readOnlyAttr} /></label>
           <div class="form-actions">
             <button type="submit" class="btn btn--primary">${isEdit ? 'Save' : 'Create'}</button>
             <button type="button" class="btn btn--secondary" id="cancel-btn">Cancel</button>
@@ -194,6 +197,8 @@ export async function renderProjectForm({ session, navigateTo }) {
         data.name = form.name.value.trim();
         data.description = form.description.value.trim();
         data.assignedTo = Number(form.assignedTo.value);
+        data.assignedToFirstName = form.assignedToFirstName.value.trim();
+        data.assignedToLastName = form.assignedToLastName.value.trim();
         data.createdAt = project?.createdAt || new Date().toLocaleDateString();
       }
 

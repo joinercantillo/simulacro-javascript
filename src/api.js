@@ -8,6 +8,8 @@ const FALLBACK_PROJECTS = [
     description: 'Corporate website redesign and UX improvements.',
     status: 'In Progress',
     assignedTo: 2,
+    assignedToFirstName: 'Ana',
+    assignedToLastName: 'García',
     createdAt: '2026-05-15',
   },
   {
@@ -16,6 +18,8 @@ const FALLBACK_PROJECTS = [
     description: 'Refactor API error handling and performance.',
     status: 'Pending',
     assignedTo: 2,
+    assignedToFirstName: 'Ana',
+    assignedToLastName: 'García',
     createdAt: '2026-05-18',
   },
   {
@@ -24,6 +28,8 @@ const FALLBACK_PROJECTS = [
     description: 'Implement CI/CD for staging and production.',
     status: 'Completed',
     assignedTo: 1,
+    assignedToFirstName: 'Carlos',
+    assignedToLastName: 'Ruiz',
     createdAt: '2026-05-10',
   },
 ];
